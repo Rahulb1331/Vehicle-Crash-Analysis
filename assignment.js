@@ -25,7 +25,7 @@ var options = {
 
 var request = new http.ClientRequest(options);
 
-request.end(jsonPayload);
+request.end(json);
 
 request.on('response', function (response) {
     console.log('Status code: ' + response.statusCode);
