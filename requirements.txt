@@ -83,6 +83,7 @@ parso==0.8.3
 patsy==0.5.6
 pillow==10.2.0
 platformdirs==3.6.0
+plotly==5.20.0
 prometheus-client==0.19.0
 prompt-toolkit==3.0.43
 protobuf==4.25.3
