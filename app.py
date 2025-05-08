@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import pydeck as pdk
 import plotly.express as px
+import geopandas as gpd
+from shapely import wkt
+from shapely.geometry import Point
 
 
 st.title("Motor Vehicle Collisions in New York City")
@@ -18,7 +21,47 @@ def load_data(nrows):
     data.rename(columns={'crash_date_crash_time': 'date/time'}, inplace= True)
     return data
 
+@st.cache_data
+def load_borough_boundaries():
+    # 1) Read the CSV
+    df = pd.read_csv(
+        "data/borough_boundaries/Borough_Boundaries.csv",
+        dtype=str
+    )
+    # 2) Parse the_geom WKT into shapely geometries
+    df["geometry"] = df["the_geom"].apply(wkt.loads)
+    # 3) Build a GeoDataFrame
+    gdf = gpd.GeoDataFrame(
+        df[["BoroName", "geometry"]],
+        crs="EPSG:4326",
+        geometry="geometry"
+    )
+    # Rename to match your collisions DF
+    gdf = gdf.rename(columns={"BoroName": "borough_from_geom"})
+    return gdf
+
+@st.cache_data
+def load_and_impute(df):
+    # 1) Load borough polygons
+    bnds = load_borough_boundaries()
+    # 2) Build crash GeoDataFrame for those with coords
+    crashes = df.dropna(subset=["latitude", "longitude"]).copy()
+    crashes = gpd.GeoDataFrame(
+        crashes,
+        geometry=[Point(xy) for xy in zip(crashes.longitude, crashes.latitude)],
+        crs="EPSG:4326"
+    )
+    # 3) Spatial join → get borough_from_geom
+    joined = gpd.sjoin(crashes, bnds, how="left", predicate="within")
+    # 4) Impute only where original borough is missing
+    df.loc[joined.index, "borough"] = df.loc[joined.index, "borough"].fillna(
+        joined["borough_from_geom"]
+    )
+    return df
+
+
 data = load_data(100000)
+data = load_and_impute(data)       # fills missing boroughs
 original_data = data
 
 st.header("Where are the most people injured in NYC?")
