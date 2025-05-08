@@ -58,6 +58,26 @@ def load_and_impute(df):
         joined["borough_from_geom"]
     )
     return df
+# Creating a new attribute "road_type"
+# 1) Compile your patterns once
+highway_rx = re.compile(r"\b(EXPY|EXPRESSWAY|PKWY|PARKWAY|TPKE|TURNPIKE)\b", flags=re.IGNORECASE)
+bridge_rx  = re.compile(r"\b(BRIDGE)\b",                                   flags=re.IGNORECASE)
+
+
+def classify_road(name):
+    """
+    - highway if it contains any expressway/parkway/turnpike token
+    - bridge  if it contains 'bridge'
+    - else     local_street
+    """
+    if not isinstance(name, str):
+        return "local_street"   # fallback if name is missing
+    if highway_rx.search(name):
+        return "highway"
+    if bridge_rx.search(name):
+        return "bridge"
+    # everything else → local street
+    return "local_street"
 
 # --- 3. SEVERITY INDEX & FEATURE WEIGHTING ---
 @st.cache_data
@@ -104,6 +124,7 @@ def compute_severity_score(df):
 
 data = load_data(100000)
 data = load_and_impute(data) # fills missing boroughs
+data["road_type"] = data["on_street_name"].apply(classify_road)
 data = compute_weights(data)
 data = compute_severity_score(data)
 
@@ -158,28 +179,7 @@ with st.expander("Show Additional"):
 if st.checkbox("Show Raw Data", False):
     st.write(data)
 
-# Creating a new attribute "road_type"
-# 1) Compile your patterns once
-highway_rx = re.compile(r"\b(EXPY|EXPRESSWAY|PKWY|PARKWAY|TPKE|TURNPIKE)\b", flags=re.IGNORECASE)
-bridge_rx  = re.compile(r"\b(BRIDGE)\b",                                   flags=re.IGNORECASE)
 
-def classify_road(name):
-    """
-    - highway if it contains any expressway/parkway/turnpike token
-    - bridge  if it contains 'bridge'
-    - else     local_street
-    """
-    if not isinstance(name, str):
-        return "local_street"   # fallback if name is missing
-    if highway_rx.search(name):
-        return "highway"
-    if bridge_rx.search(name):
-        return "bridge"
-    # everything else → local street
-    return "local_street"
-
-# 2) Apply to your DataFrame
-data["road_type"] = data["on_street_name"].apply(classify_road)
 
 st.dataframe(data.head(10))
 original_data = data
