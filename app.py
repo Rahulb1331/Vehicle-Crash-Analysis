@@ -9,7 +9,7 @@ st.title("Motor Vehicle Collisions in New York City")
 st.markdown("This application is a streamlit dashboard that can be used "
 "to analyze motor vehicle collisions in NYC")
 
-@st.cache(persist=True)
+@st.cache_data(persist=True)
 def load_data(nrows):
     data = pd.read_csv("Data/Motor_Vehicle_Collisions_-_Crashes.csv", nrows = nrows, parse_dates=[['CRASH_DATE','CRASH_TIME']])
     data.dropna(subset=['LATITUDE','LONGITUDE'], inplace = True)
