@@ -8,6 +8,9 @@ async-lru==2.0.4
 attrs==23.2.0
 Babel==2.14.0
 beautifulsoup4==4.12.3
+geopandas
+shapely
+rtree
 bleach==6.1.0
 blinker==1.7.0
 cachetools==5.3.3
