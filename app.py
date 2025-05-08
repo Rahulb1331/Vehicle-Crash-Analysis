@@ -68,6 +68,14 @@ st.header("Where are the most people injured in NYC?")
 injured_people = st.slider("Number of injured persons in vehicle collision", 0, 19)
 st.map(data.query("injured_persons >= @injured_people")[["latitude","longitude"]].dropna(how = 'any'))
 
+st.subheader("Borough Imputation Summary")
+counts = data["borough"].isna().value_counts()
+st.write(pd.DataFrame({
+    "Missing Borough?": counts.index.map({True:"Yes",False:"No"}),
+    "Count": counts.values
+}))
+
+
 st.header("How many collisions occur during a given time of day?")
 hour = st.slider("Hour to look at", 0, 23)
 data = data[data['date/time'].dt.hour== hour]
