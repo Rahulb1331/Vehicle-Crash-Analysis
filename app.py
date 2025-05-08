@@ -59,9 +59,104 @@ def load_and_impute(df):
     )
     return df
 
+# --- 3. SEVERITY INDEX & FEATURE WEIGHTING ---
+@st.cache_data
+def compute_weights(df):
+    # base severity
+    df['base_severity'] = 5*df['killed_persons'] + 1*df['injured_persons']
+    # vehicle weights
+    veh_stats = (
+        df.groupby('vehicle_type_1')['base_severity']
+          .mean()
+          .reset_index(name='avg_severity')
+    )
+    mn, mx = veh_stats['avg_severity'].min(), veh_stats['avg_severity'].max()
+    veh_stats['vehicle_weight'] = (veh_stats['avg_severity'] - mn) / (mx - mn) * 3
+    vehicle_map = dict(zip(veh_stats['vehicle_type_1'], veh_stats['vehicle_weight']))
+    df['vehicle_weight'] = df['vehicle_type_1'].map(vehicle_map).fillna(0)
+    # factor weights
+    fac_stats = (
+        df.groupby('contributing_factor_vehicle_1')['base_severity']
+          .mean()
+          .reset_index(name='avg_severity')
+    )
+    mn_f, mx_f = fac_stats['avg_severity'].min(), fac_stats['avg_severity'].max()
+    fac_stats['factor_weight'] = (fac_stats['avg_severity'] - mn_f) / (mx_f - mn_f) * 3
+    factor_map = dict(zip(fac_stats['contributing_factor_vehicle_1'], fac_stats['factor_weight']))
+    df['factor_weight'] = df['contributing_factor_vehicle_1'].map(factor_map).fillna(0)
+    return df
+
+@st.cache_data
+def compute_severity_score(df):
+    # ensure road type exists
+    df['road_type'] = df['on_street_name'].apply(classify_road)
+    # map road type weight
+    rt_map = {'highway':3, 'bridge':2, 'local_street':0}
+    df['road_weight'] = df['road_type'].map(rt_map)
+    # compute composite score
+    df['severity_score'] = (
+        df['base_severity']
+      + df['road_weight']
+      + df['vehicle_weight']
+      + df['factor_weight']
+    )
+    return df
 
 data = load_data(100000)
 data = load_and_impute(data) # fills missing boroughs
+data = compute_weights(data)
+data = compute_severity_score(data)
+
+with st.expander("Show Additional"):
+    # road type distribution
+    st.header("Crash Counts by Road Type")
+    pc = data['road_type'].value_counts().reset_index()
+    pc.columns = ['road_type','count']
+    st.bar_chart(pc.set_index('road_type'))
+
+    # severity ranking by street
+    st.header("Top 10 Streets by Average Severity")
+    street_sev = (
+        data.groupby('on_street_name')['severity_score']
+            .mean()
+            .sort_values(ascending=False)
+            .head(10)
+    )
+    st.table(street_sev.reset_index().rename(columns={0:'avg_severity'}))
+
+    # high-severity heatmap
+    st.header("High-Severity Crash Hotspots")
+    threshold = data['severity_score'].quantile(0.9)
+    high_sev = data[data['severity_score'] >= threshold]
+    mid = (high_sev['latitude'].mean(), high_sev['longitude'].mean())
+
+    st.pydeck_chart(pdk.Deck(
+        map_style="mapbox://styles/mapbox/light-v9",
+        initial_view_state={"latitude":mid[0], "longitude":mid[1], "zoom":10, "pitch":45},
+        layers=[
+            pdk.Layer(
+                "HeatmapLayer",
+                data=high_sev[['latitude','longitude','severity_score']],
+                get_position=['longitude','latitude'],
+                get_weight='severity_score',
+                radiusPixels=60,
+            )
+        ]
+    ))
+
+    # factor word cloud example (needs additional implementation)
+    st.header("Top Contributing Factors by Weight")
+    fac_stats = (
+        data.groupby('contributing_factor_vehicle_1')['factor_weight']
+            .mean()
+            .sort_values(ascending=False)
+            .head(10)
+    )
+    st.bar_chart(fac_stats)
+
+    # show raw data toggle
+if st.checkbox("Show Raw Data", False):
+    st.write(data)
 
 # Creating a new attribute "road_type"
 # 1) Compile your patterns once
