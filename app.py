@@ -25,7 +25,7 @@ def load_data(nrows):
 def load_borough_boundaries():
     # 1) Read the CSV
     df = pd.read_csv(
-        "data/borough_boundaries/Borough_Boundaries.csv",
+        "Data/Borough Boundaries.csv",
         dtype=str
     )
     # 2) Parse the_geom WKT into shapely geometries
