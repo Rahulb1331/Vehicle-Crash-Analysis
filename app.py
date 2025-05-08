@@ -6,7 +6,7 @@ import plotly.express as px
 import geopandas as gpd
 from shapely import wkt
 from shapely.geometry import Point
-
+import re
 
 st.title("Motor Vehicle Collisions in New York City")
 st.markdown("This application is a streamlit dashboard that can be used "
@@ -61,7 +61,32 @@ def load_and_impute(df):
 
 
 data = load_data(100000)
-data = load_and_impute(data)       # fills missing boroughs
+data = load_and_impute(data) # fills missing boroughs
+
+# Creating a new attribute "road_type"
+# 1) Compile your patterns once
+highway_rx = re.compile(r"\b(EXPY|EXPRESSWAY|PKWY|PARKWAY|TPKE|TURNPIKE)\b", flags=re.IGNORECASE)
+bridge_rx  = re.compile(r"\b(BRIDGE)\b",                                   flags=re.IGNORECASE)
+
+def classify_road(name):
+    """
+    - highway if it contains any expressway/parkway/turnpike token
+    - bridge  if it contains 'bridge'
+    - else     local_street
+    """
+    if not isinstance(name, str):
+        return "local_street"   # fallback if name is missing
+    if highway_rx.search(name):
+        return "highway"
+    if bridge_rx.search(name):
+        return "bridge"
+    # everything else → local street
+    return "local_street"
+
+# 2) Apply to your DataFrame
+data["road_type"] = data["on_street_name"].apply(classify_road)
+
+st.dataframe(data.head(10))
 original_data = data
 
 st.header("Where are the most people injured in NYC?")
