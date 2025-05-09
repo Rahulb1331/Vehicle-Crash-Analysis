@@ -81,7 +81,7 @@ def nlp_contributing_factors(df):
         factors_long['factor']
           .value_counts()
           .reset_index()
-          .rename(columns={'index':'factor','factor':'count'})
+          .rename(columns={'index':'factor','0':'count'})
     )
     top20 = factor_counts.head(20)
     # Time-trend per factor
