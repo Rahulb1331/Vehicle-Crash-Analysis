@@ -66,6 +66,10 @@ with st.expander("Show Additional"):
 ## Doing NLP Based contributing factor analysis
 
 # --- 4. NLP-BASED CONTRIBUTING FACTOR ANALYSIS ---
+# Topic Modeling
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+
 @st.cache_data
 def nlp_contributing_factors(df):
     factor_cols = [f'contributing_factor_vehicle_{i}' for i in range(1,6)]
@@ -100,7 +104,19 @@ def nlp_contributing_factors(df):
     )
     top_factors = top20['factor']
     trend_top = trend[trend['factor'].isin(top_factors)]
-    return factor_counts, top20, trend_top
+    
+    # Topic Modeling on combined factor text per crash
+    docs = df[factor_cols].fillna('').agg(' '.join, axis=1)
+    vectorizer = CountVectorizer(stop_words='english', min_df=50)
+    X = vectorizer.fit_transform(docs)
+    lda = LatentDirichletAllocation(n_components=5, random_state=0)
+    lda.fit(X)
+    topics = []
+    terms = vectorizer.get_feature_names_out()
+    for idx, comp in enumerate(lda.components_):
+        top_terms = [terms[i] for i in comp.argsort()[-10:]][::-1]
+        topics.append((idx+1, top_terms))
+    return factor_counts, top20, trend_top, topics
 
 with st.expander("Show NLP based contributing factor analysis"):
     # NLP-based contributing factor analysis
@@ -123,20 +139,11 @@ with st.expander("Show NLP based contributing factor analysis"):
         title='Yearly Trend of Top 20 Contributing Factors'
     )
     st.plotly_chart(fig_trend)
+    # Topic Modeling Results
+    st.subheader("LDA Topic Modeling of Contributing Factors")
+    for tid, terms in topics:
+        st.write(f"**Topic {tid}:** " + ", ".join(terms))
 
-    # Topic Modeling
-    #from sklearn.feature_extraction.text import CountVectorizer
-    #from sklearn.decomposition import LatentDirichletAllocation
-
-    #vec = CountVectorizer(stop_words='english')
-    #X = vec.fit_transform(data['factors_clean'])
-    #lda = LatentDirichletAllocation(n_components=5, random_state=0)
-    #topics = lda.fit_transform(X)
-
-    # Show top words per topic
-    #for idx, comp in enumerate(lda.components_):
-     #   words = [vec.get_feature_names_out()[i] for i in comp.argsort()[-10:]]
-     #   st.write(f"Topic {idx}: " + ", ".join(words))
 
 
 # show raw data toggle
