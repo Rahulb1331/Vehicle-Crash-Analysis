@@ -297,6 +297,31 @@ elif select == "Cyclists":
 else:
     st.write(original_data.query("injured_motorists >= 1")[["on_street_name", "injured_motorists"]].sort_values(by =['injured_motorists'], ascending  = False).dropna(how='any')[:5])
 
+# --- 8. INSIGHTS & RECOMMENDATIONS ---
+st.header("Insights & Recommendations")
+
+with st.expander("📈 Insights"):
+    st.subheader("Key Findings")
+    st.markdown("""
+    - **Expressways dominate crash volume**, particularly involving Sedans and Passenger Vehicles during peak commute hours.
+    - **“Following Too Closely”** consistently ranks among the top contributing factors, yet many reports leave the factor as “Unspecified.”
+    - Although **injury rates on bridges and local streets** may be lower, the **inherent risk** (due to speed, weather exposure, narrow lanes) remains high—bridges account for a disproportionate share of high‑severity incidents.
+    """)
+
+with st.expander("💡 Recommendations"):
+    st.subheader("Actionable Recommendations")
+    st.markdown("""
+    - **Digital Signage & Speed Alerts**  
+      Deploy variable‑message signs on expressways (e.g. I‑278, Belt Parkway) during 5–8 PM to warn of congestion and tailgating risks.
+    - **Rear‑End Collision Mitigations**  
+      Trial low‑speed bump zones or rumble strips on Staten Island expressways where “Following Too Closely” spikes have been identified.
+    - **Data Quality Improvement**  
+      Standardize crash-reporting protocols to reduce the “Unspecified” contributing factor bucket—train officers to select from a controlled vocabulary.
+    - **Bridge Safety Audits**  
+      Conduct periodic ice‑detection and de‑icing operations on major crossings (e.g. Verrazano, Queensboro) before winter shoulder‑periods, informed by your high‑severity heatmap.
+    """)
+
+
 if st.checkbox("Show Raw Data", False, key = "2"):
     st.subheader('Raw Data')
     st.write(data)
