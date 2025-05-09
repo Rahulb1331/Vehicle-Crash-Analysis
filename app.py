@@ -186,7 +186,8 @@ with st.expander("Show Vehicle and Factor Clustering"):
             get_fill_color=["cluster * 50 % 255", "cluster * 80 % 255", "cluster * 120 % 255"],
             get_radius=20,
             pickable=True
-        )]
+        )],
+        tooltip={"text": "Cluster: {cluster}"}  # Adding a TOOLTIP
     ))
 
 # show raw data toggle
