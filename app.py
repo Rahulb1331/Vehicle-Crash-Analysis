@@ -300,6 +300,79 @@ else:
 # --- 8. INSIGHTS & RECOMMENDATIONS ---
 st.header("Insights & Recommendations")
 
+with st.expander("Final"):
+    # --- Severity Ranking by Street (Avg Severity + Count) ---
+    st.header("Top 10 Streets by Average Severity (with Crash Count)")
+    street_stats = (
+        data
+        .groupby('on_street_name')
+        .agg(
+            avg_severity=('severity_score', 'mean'),
+            crash_count=('severity_score', 'size')
+        )
+        .sort_values(by='avg_severity', ascending=False)
+        .head(10)
+        .reset_index()
+    )
+    st.table(street_stats.style.format({
+        'avg_severity': '{:.2f}',
+        'crash_count': '{:d}'
+    }))
+
+    import shap
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import accuracy_score, roc_auc_score
+
+    # --- Predictive Modeling: High-Severity Classification ---
+    st.header("Predictive Model: High‑Severity Crash Classifier")
+
+    # 2a) Define target (1 if in top decile of severity)
+    threshold = data['severity_score'].quantile(0.90)
+    data['high_severity'] = (data['severity_score'] >= threshold).astype(int)
+
+    # 2b) Feature matrix
+    #   - numeric: hour, road_weight, vehicle_weight, factor_weight
+    #   - one‑hot: road_type, borough
+    X = data[['hour', 'road_weight', 'vehicle_weight', 'factor_weight']].copy()
+    X = pd.concat([
+        X,
+        pd.get_dummies(data[['road_type', 'borough']], drop_first=True)
+    ], axis=1)
+    y = data['high_severity']
+
+    # 2c) Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42, stratify=y
+    )
+
+    # 2d) Fit Random Forest
+    clf = RandomForestClassifier(n_estimators=100, random_state=42)
+    clf.fit(X_train, y_train)
+
+    # 2e) Evaluate
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)[:, 1]
+    st.write(f"**Accuracy:** {accuracy_score(y_test, y_pred):.2f}")
+    st.write(f"**AUC:** {roc_auc_score(y_test, y_proba):.2f}")
+
+    # --- SHAP Feature Importance ---
+    st.subheader("🔍 SHAP Feature Importance")
+
+    # 3a) Explain the model
+    explainer = shap.TreeExplainer(clf)
+    shap_values = explainer.shap_values(X_test)
+
+    # 3b) SHAP summary bar plot (feature importance)
+    fig_shap = shap.summary_plot(
+        shap_values[1],  # class = “high severity”
+        X_test,
+        plot_type="bar",
+        show=False
+    )
+
+    # 3c) Display in Streamlit
+    st.pyplot(fig_shap)
 with st.expander("📈 Insights"):
     st.subheader("Key Findings")
     st.markdown("""
