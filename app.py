@@ -206,7 +206,7 @@ with st.expander("Time-of-Day & Road-Type Interaction "):
     )
 
     # 3) Plot grouped bar chart with hover tooltips
-    fig_time_road = px.bar(
+    fig_time_road = px.line( #px.line or px.bar
         time_road_df,
         x='hour',
         y='crash_count',
