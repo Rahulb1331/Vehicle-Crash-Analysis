@@ -350,6 +350,22 @@ with st.expander("Final"):
     clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(X_train, y_train)
 
+    # Testing the shap shape
+    # after fitting your model...
+    explainer = shap.TreeExplainer(clf)
+    shap_vals = explainer.shap_values(X_test)
+
+    # Check what you got
+    st.write("SHAP output type:", type(shap_vals))
+    if isinstance(shap_vals, list):
+        st.write("  class‑0 shape:", shap_vals[0].shape)
+        st.write("  class‑1 shape:", shap_vals[1].shape)
+    else:
+        st.write("  SHAP shape:", shap_vals.shape)
+
+    st.write("X_test shape:", X_test.shape)
+
+
     # 2e) Evaluate
     y_pred = clf.predict(X_test)
     y_proba = clf.predict_proba(X_test)[:, 1]
@@ -358,7 +374,7 @@ with st.expander("Final"):
 
     # --- SHAP Feature Importance ---
     st.subheader("🔍 SHAP Feature Importance")
-
+    
     # 3a) Explain the model
     explainer = shap.TreeExplainer(clf)
     shap_values = explainer.shap_values(X_test)
