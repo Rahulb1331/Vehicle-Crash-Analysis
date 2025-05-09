@@ -17,7 +17,6 @@ import shap
 from Preprocessing import load_d
 
 # --- Title and Description ---
-st.set_page_config(layout="wide")
 st.title("🚗 Motor Vehicle Collisions in New York City")
 st.markdown("A Streamlit dashboard to explore and analyze motor vehicle collisions across NYC using geospatial and machine learning tools.")
 
