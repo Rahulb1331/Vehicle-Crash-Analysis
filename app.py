@@ -67,9 +67,6 @@ with st.expander("Show Additional"):
 if st.checkbox("Show Raw Data", False, key = "one"):
     st.write(data)
 
-
-
-st.dataframe(data.head(10))
 original_data = data
 
 st.header("Where are the most people injured in NYC?")
