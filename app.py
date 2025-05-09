@@ -77,7 +77,7 @@ def nlp_contributing_factors(df):
     factor_cols = [f'contributing_factor_vehicle_{i}' for i in range(1,6)]
     df['year'] = df['date/time'].dt.year
     factors_long = df[factor_cols].fillna('Unspecified').melt(value_name='factor').query("factor not in ('', 'Unspecified')")
-    factor_counts = factors_long['factor'].value_counts().reset_index().rename(columns={'index':'factor','factor':'count'})
+    factor_counts = factors_long['factor'].value_counts().reset_index().rename(columns={'index':'factor','0':'count'})
     top20 = factor_counts.head(20)
 
     trend = df[['year'] + factor_cols].fillna('Unspecified').melt(id_vars=['year'], value_name='factor').query("factor != ''")
