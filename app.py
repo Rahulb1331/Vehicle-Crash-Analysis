@@ -379,31 +379,32 @@ with st.expander("Final"):
     explainer = shap.TreeExplainer(clf)
     shap_values = explainer.shap_values(X_test)
 
-    # 2) Handle both possible SHAP outputs:
-    #    - list of two (n_samples × n_features) arrays
-    #    - single ndarray of shape (n_samples, n_features, n_classes)
+    # 2) Slice out the positive‑class SHAP matrix
     if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
-        # pick the positive‑class slice
         shap_vals_pos = shap_values[:, :, 1]
     elif isinstance(shap_values, list):
-        # pick the array for class 1
         shap_vals_pos = shap_values[1]
     else:
         shap_vals_pos = shap_values
 
-    # (Optional) sanity check
-    # assert shap_vals_pos.shape == X_test.shape
+    # 3) Compute mean absolute SHAP value per feature
+    feature_names = X_test.columns.to_list()
+    mean_abs_shap = np.abs(shap_vals_pos).mean(axis=0)
 
-    # 3) Plot SHAP summary bar chart
-    fig_shap = shap.summary_plot(
-        shap_vals_pos,
-        X_test,
-        plot_type="bar",
-        show=False
-    )
+    # 4) Sort features by importance
+    order = np.argsort(mean_abs_shap)
+    sorted_names = [feature_names[i] for i in order]
+    sorted_importance = mean_abs_shap[order]
 
-    # 4) Render in Streamlit
-    st.pyplot(fig_shap)
+    # 5) Plot with Matplotlib (thread‐safe)
+    fig, ax = plt.subplots(figsize=(6, len(sorted_names) * 0.3))
+    ax.barh(sorted_names, sorted_importance)
+    ax.set_title("Mean |SHAP value| per Feature\n(high‑severity class)")
+    ax.set_xlabel("Mean(|SHAP value|)")
+    plt.tight_layout()
+
+    # 6) Render in Streamlit by passing the figure
+    st.pyplot(fig)
 
 # INSIGHTS AND RECOMMENDATIONS
 with st.expander("📈 Insights"):
