@@ -125,18 +125,18 @@ with st.expander("Show NLP based contributing factor analysis"):
     st.plotly_chart(fig_trend)
 
     # Topic Modeling
-    from sklearn.feature_extraction.text import CountVectorizer
-    from sklearn.decomposition import LatentDirichletAllocation
+    #from sklearn.feature_extraction.text import CountVectorizer
+    #from sklearn.decomposition import LatentDirichletAllocation
 
-    vec = CountVectorizer(stop_words='english')
-    X = vec.fit_transform(data['factors_clean'])
-    lda = LatentDirichletAllocation(n_components=5, random_state=0)
-    topics = lda.fit_transform(X)
+    #vec = CountVectorizer(stop_words='english')
+    #X = vec.fit_transform(data['factors_clean'])
+    #lda = LatentDirichletAllocation(n_components=5, random_state=0)
+    #topics = lda.fit_transform(X)
 
     # Show top words per topic
-    for idx, comp in enumerate(lda.components_):
-        words = [vec.get_feature_names_out()[i] for i in comp.argsort()[-10:]]
-        st.write(f"Topic {idx}: " + ", ".join(words))
+    #for idx, comp in enumerate(lda.components_):
+     #   words = [vec.get_feature_names_out()[i] for i in comp.argsort()[-10:]]
+     #   st.write(f"Topic {idx}: " + ", ".join(words))
 
 
 # show raw data toggle
