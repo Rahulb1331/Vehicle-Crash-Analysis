@@ -212,7 +212,7 @@ with st.expander("Time-of-Day & Road-Type Interaction "):
         x='hour',
         y='crash_count',
         color='road_type',
-        barmode='group',
+        #barmode='group', (needed if plotting a bar graph)
         labels={
             'hour': 'Hour of Day',
             'crash_count': 'Number of Crashes',
