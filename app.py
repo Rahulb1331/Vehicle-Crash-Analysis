@@ -190,6 +190,43 @@ with st.expander("Show Vehicle and Factor Clustering"):
         tooltip={"text": "Cluster: {cluster}"}  # Adding a TOOLTIP
     ))
 
+# --- 7. TIME‑OF‑DAY & ROAD‑TYPE INTERACTION DASHBOARD ---
+with st.expander("Time-of-Day & Road-Type Interaction "):
+    st.header("Crashes by Time of Day & Road Type")
+
+    # 1) Extract hour of day
+    data['hour'] = data['date/time'].dt.hour
+
+    # 2) Aggregate crash counts by hour and road_type
+    time_road_df = (
+        data
+        .groupby(['hour', 'road_type'])
+        .size()
+        .reset_index(name='crash_count')
+    )
+
+    # 3) Plot grouped bar chart with hover tooltips
+    fig_time_road = px.bar(
+        time_road_df,
+        x='hour',
+        y='crash_count',
+        color='road_type',
+        barmode='group',
+        labels={
+            'hour': 'Hour of Day',
+            'crash_count': 'Number of Crashes',
+            'road_type': 'Road Type'
+        },
+        title='Crash Frequency by Hour of Day, Segmented by Road Type',
+        hover_data=['road_type', 'crash_count']
+    )
+    fig_time_road.update_layout(
+        xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+        legend_title_text='Road Type'
+    )
+    st.plotly_chart(fig_time_road, use_container_width=True)
+
+
 # show raw data toggle
 if st.checkbox("Show Raw Data", False, key = "one"):
     st.write(data)
