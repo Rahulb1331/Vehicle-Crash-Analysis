@@ -17,7 +17,7 @@ st.markdown("This application is a streamlit dashboard that can be used "
 
 data = load_d()
 
-with st.expander("Show Additional"):
+with st.expander("Crash Severity Analysis"):
     # road type distribution
     st.header("Crash Counts by Road Type")
     pc = data['road_type'].value_counts().reset_index()
