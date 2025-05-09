@@ -63,7 +63,60 @@ with st.expander("Show Additional"):
     )
     st.bar_chart(fac_stats)
 
-    # show raw data toggle
+## Doing NLP Based contributing factor analysis
+with st.expander("Show NLP based contributing factor analysis"):
+    # Combine all 5 factor columns into one text series
+    factor_cols = [f'contributing_factor_vehicle_{i}' for i in range(1,6)]
+    data['factors_raw'] = (
+        data[factor_cols]
+          .fillna('Unspecified')
+          .agg(' '.join, axis=1)
+          .str.lower()
+    )
+    # Basic cleanup
+    data['factors_clean'] = data['factors_raw'].str.replace(r'[^a-z ]',' ', regex=True)
+
+    #Frequency Bar Chart
+    from collections import Counter
+    all_factors = ' '.join(data['factors_clean']).split()
+    freq = Counter(all_factors)
+    top = pd.DataFrame(freq.most_common(20), columns=['factor','count'])
+    fig = px.bar(top, x='factor', y='count', title='Top 20 Contributing Factors')
+    st.plotly_chart(fig)
+
+    # Time-based Trends
+    # Expand each crash into one row per factor for time series
+    exploded = (
+      data[['date/time','factors_clean']]
+        .assign(factor=lambda d: d['factors_clean'].str.split())
+        .explode('factor')
+    )
+    ts = (
+      exploded.groupby([exploded['date/time'].dt.year, 'factor'])
+              .size()
+              .reset_index(name='count')
+    )
+    # Pivot to have years as columns, factors as rows or vice versa
+    fig2 = px.line(ts, x='date/time', y='count', color='factor',
+                   title='Yearly Trend of Contributing Factors')
+    st.plotly_chart(fig2)
+
+    # Topic Modeling
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.decomposition import LatentDirichletAllocation
+
+    vec = CountVectorizer(stop_words='english')
+    X = vec.fit_transform(data['factors_clean'])
+    lda = LatentDirichletAllocation(n_components=5, random_state=0)
+    topics = lda.fit_transform(X)
+
+    # Show top words per topic
+    for idx, comp in enumerate(lda.components_):
+        words = [vec.get_feature_names_out()[i] for i in comp.argsort()[-10:]]
+        st.write(f"Topic {idx}: " + ", ".join(words))
+
+
+# show raw data toggle
 if st.checkbox("Show Raw Data", False, key = "one"):
     st.write(data)
 
