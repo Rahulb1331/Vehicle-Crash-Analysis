@@ -121,7 +121,7 @@ def nlp_contributing_factors(df):
 with st.expander("Show NLP based contributing factor analysis"):
     # NLP-based contributing factor analysis
     st.header("Contributing Factor NLP Analysis")
-    factor_counts, top20, trend_top = nlp_contributing_factors(data)
+    factor_counts, top20, trend_top, topics = nlp_contributing_factors(data)
     # Top 20 factors bar chart and removing the Unspecified from the plots since its count is too much. (300K+ while the next highest one is only around 20K)
     fig_factors = px.bar(
         top20,
