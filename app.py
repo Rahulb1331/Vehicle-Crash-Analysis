@@ -85,7 +85,7 @@ def nlp_contributing_factors(df):
     )
     top20 = factor_counts.head(20)
     # Time-trend per factor
-    df['year'] = df['date_time'].dt.year
+    df['year'] = df['date/time'].dt.year
     factors_trend = (
         df[['year'] + factor_cols]
           .fillna('Unspecified')
