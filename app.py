@@ -14,10 +14,7 @@ st.title("Motor Vehicle Collisions in New York City")
 st.markdown("This application is a streamlit dashboard that can be used "
 "to analyze motor vehicle collisions in NYC")
 
-
-
 data = load_d()
-
 
 with st.expander("Show Additional"):
     # road type distribution
@@ -67,7 +64,7 @@ with st.expander("Show Additional"):
     st.bar_chart(fac_stats)
 
     # show raw data toggle
-if st.checkbox("Show Raw Data", False):
+if st.checkbox("Show Raw Data", False, key = "one"):
     st.write(data)
 
 
@@ -138,6 +135,6 @@ elif select == "Cyclists":
 else:
     st.write(original_data.query("injured_motorists >= 1")[["on_street_name", "injured_motorists"]].sort_values(by =['injured_motorists'], ascending  = False).dropna(how='any')[:5])
 
-if st.checkbox("Show Raw Data", False):
+if st.checkbox("Show Raw Data", False, key = "2"):
     st.subheader('Raw Data')
     st.write(data)
