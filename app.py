@@ -145,8 +145,8 @@ with st.expander("Show NLP based contributing factor analysis"):
         st.write(f"**Topic {tid}:** " + ", ".join(terms))
 
 # --- 5. VEHICLE & FACTOR CLUSTERING ---
-@st.cache_data
 from sklearn.cluster import KMeans
+@st.cache_data
 def compute_clusters(df, n_clusters=5):
     # Combine vehicle types and factors into documents
     feat_cols = [f'vehicle_type_{i}' for i in range(1,6)] + [f'contributing_factor_vehicle_{i}' for i in range(1,6)]
