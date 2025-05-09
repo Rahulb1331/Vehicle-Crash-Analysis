@@ -64,42 +64,65 @@ with st.expander("Show Additional"):
     st.bar_chart(fac_stats)
 
 ## Doing NLP Based contributing factor analysis
-with st.expander("Show NLP based contributing factor analysis"):
-    # Combine all 5 factor columns into one text series
+
+# --- 4. NLP-BASED CONTRIBUTING FACTOR ANALYSIS ---
+@st.cache_data
+def nlp_contributing_factors(df):
     factor_cols = [f'contributing_factor_vehicle_{i}' for i in range(1,6)]
-    data['factors_raw'] = (
-        data[factor_cols]
+    # Melt into long format
+    factors_long = (
+        df[factor_cols]
           .fillna('Unspecified')
-          .agg(' '.join, axis=1)
-          .str.lower()
+          .melt(value_name='factor')
+          .query("factor != ''")
     )
-    # Basic cleanup
-    data['factors_clean'] = data['factors_raw'].str.replace(r'[^a-z ]',' ', regex=True)
+    # Count factor frequencies
+    factor_counts = (
+        factors_long['factor']
+          .value_counts()
+          .reset_index()
+          .rename(columns={'index':'factor','factor':'count'})
+    )
+    top20 = factor_counts.head(20)
+    # Time-trend per factor
+    df['year'] = df['date_time'].dt.year
+    factors_trend = (
+        df[['year'] + factor_cols]
+          .fillna('Unspecified')
+          .melt(id_vars=['year'], value_name='factor')
+          .query("factor != ''")
+    )
+    trend = (
+        factors_trend
+          .groupby(['year','factor'])
+          .size()
+          .reset_index(name='count')
+    )
+    top_factors = top20['factor']
+    trend_top = trend[trend['factor'].isin(top_factors)]
+    return factor_counts, top20, trend_top
 
-    #Frequency Bar Chart
-    from collections import Counter
-    all_factors = ' '.join(data['factors_clean']).split()
-    freq = Counter(all_factors)
-    top = pd.DataFrame(freq.most_common(20), columns=['factor','count'])
-    fig = px.bar(top, x='factor', y='count', title='Top 20 Contributing Factors')
-    st.plotly_chart(fig)
-
-    # Time-based Trends
-    # Expand each crash into one row per factor for time series
-    exploded = (
-      data[['date/time','factors_clean']]
-        .assign(factor=lambda d: d['factors_clean'].str.split())
-        .explode('factor')
+with st.expander("Show NLP based contributing factor analysis"):
+    # NLP-based contributing factor analysis
+    st.header("Contributing Factor NLP Analysis")
+    factor_counts, top20, trend_top = nlp_contributing_factors(data)
+    # Top 20 factors bar chart
+    fig_factors = px.bar(
+        top20,
+        x='factor', y='count',
+        title='Top 20 Contributing Factors',
+        labels={'factor':'Contributing Factor','count':'Crash Count'},
+        height=500
     )
-    ts = (
-      exploded.groupby([exploded['date/time'].dt.year, 'factor'])
-              .size()
-              .reset_index(name='count')
+    fig_factors.update_layout(xaxis_tickangle=45)
+    st.plotly_chart(fig_factors)
+    # Yearly trend line chart
+    fig_trend = px.line(
+        trend_top,
+        x='year', y='count', color='factor',
+        title='Yearly Trend of Top 20 Contributing Factors'
     )
-    # Pivot to have years as columns, factors as rows or vice versa
-    fig2 = px.line(ts, x='date/time', y='count', color='factor',
-                   title='Yearly Trend of Contributing Factors')
-    st.plotly_chart(fig2)
+    st.plotly_chart(fig_trend)
 
     # Topic Modeling
     from sklearn.feature_extraction.text import CountVectorizer
