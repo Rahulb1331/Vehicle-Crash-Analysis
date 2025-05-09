@@ -144,7 +144,49 @@ with st.expander("Show NLP based contributing factor analysis"):
     for tid, terms in topics:
         st.write(f"**Topic {tid}:** " + ", ".join(terms))
 
+# --- 5. VEHICLE & FACTOR CLUSTERING ---
+@st.cache_data
+def compute_clusters(df, n_clusters=5):
+    # Combine vehicle types and factors into documents
+    feat_cols = [f'vehicle_type_{i}' for i in range(1,6)] + [f'contributing_factor_vehicle_{i}' for i in range(1,6)]
+    docs = df[feat_cols].fillna('').agg(' '.join, axis=1)
+    vec = CountVectorizer(stop_words='english', min_df=50)
+    X = vec.fit_transform(docs)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    labels = kmeans.fit_predict(X)
+    df['cluster'] = labels
+    terms = vec.get_feature_names_out()
+    cluster_terms = []
+    for i, center in enumerate(kmeans.cluster_centers_):
+        top_idx = center.argsort()[-10:][::-1]
+        top_terms = [terms[j] for j in top_idx]
+        cluster_terms.append((i, top_terms))
+    return df, cluster_terms
 
+with st.expander("Show Vehicle and Factor Clustering"):
+    # Vehicle & Factor Clustering
+    st.header("Crash Clusters by Vehicle & Factor Profiles")
+    data, cluster_terms = compute_clusters(data)
+    st.write("## Cluster Sizes")
+    st.write(data['cluster'].value_counts().sort_index())
+    st.write("## Top Terms per Cluster")
+    for cid, terms in cluster_terms:
+        st.write(f"**Cluster {cid}:** " + ", ".join(terms))
+
+    # Optionally, map crashes by cluster
+    st.header("Geographic Distribution of Clusters")
+    st.pydeck_chart(pdk.Deck(
+        map_style="mapbox://styles/mapbox/light-v9",
+        initial_view_state={"latitude":data['latitude'].mean(),"longitude":data['longitude'].mean(),"zoom":10},
+        layers=[pdk.Layer(
+            "ScatterplotLayer",
+            data=data,
+            get_position=["longitude","latitude"],
+            get_fill_color=["cluster * 50 % 255", "cluster * 80 % 255", "cluster * 120 % 255"],
+            get_radius=20,
+            pickable=True
+        )]
+    ))
 
 # show raw data toggle
 if st.checkbox("Show Raw Data", False, key = "one"):
