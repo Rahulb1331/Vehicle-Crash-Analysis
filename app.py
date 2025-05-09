@@ -74,7 +74,7 @@ def nlp_contributing_factors(df):
         df[factor_cols]
           .fillna('Unspecified')
           .melt(value_name='factor')
-          .query("factor not in ('', 'Unspecified')")
+          .query("factor not in ('', 'Unspecified')") # since many values are missing in the contributing factors columns so they will be renamed to Unspecified and the Unspecified count will be too much, so removing it from analysis.
     )
     # Count factor frequencies
     factor_counts = (
