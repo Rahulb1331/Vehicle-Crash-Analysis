@@ -374,21 +374,38 @@ with st.expander("Final"):
 
     # --- SHAP Feature Importance ---
     st.subheader("🔍 SHAP Feature Importance")
-    
-    # 3a) Explain the model
+
+    # 1) Explain the model
     explainer = shap.TreeExplainer(clf)
     shap_values = explainer.shap_values(X_test)
 
-    # 3b) SHAP summary bar plot (feature importance)
+    # 2) Handle both possible SHAP outputs:
+    #    - list of two (n_samples × n_features) arrays
+    #    - single ndarray of shape (n_samples, n_features, n_classes)
+    if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+        # pick the positive‑class slice
+        shap_vals_pos = shap_values[:, :, 1]
+    elif isinstance(shap_values, list):
+        # pick the array for class 1
+        shap_vals_pos = shap_values[1]
+    else:
+        shap_vals_pos = shap_values
+
+    # (Optional) sanity check
+    # assert shap_vals_pos.shape == X_test.shape
+
+    # 3) Plot SHAP summary bar chart
     fig_shap = shap.summary_plot(
-        shap_values[1],  # class = “high severity”
+        shap_vals_pos,
         X_test,
         plot_type="bar",
         show=False
     )
 
-    # 3c) Display in Streamlit
+    # 4) Render in Streamlit
     st.pyplot(fig_shap)
+
+# INSIGHTS AND RECOMMENDATIONS
 with st.expander("📈 Insights"):
     st.subheader("Key Findings")
     st.markdown("""
