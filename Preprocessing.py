@@ -35,6 +35,13 @@ def load_borough_boundaries():
     return gdf
 
 @st.cache_data
+def normalize_borough_names(df):
+    if "borough" in df.columns:
+        df["borough"] = df["borough"].str.strip().str.upper().str.replace(r'\s+', ' ', regex=True)
+    return df
+
+
+@st.cache_data
 def load_and_impute(df):
     # 1) Load borough polygons
     bnds = load_borough_boundaries()
@@ -51,6 +58,7 @@ def load_and_impute(df):
     df.loc[joined.index, "borough"] = df.loc[joined.index, "borough"].fillna(
         joined["borough_from_geom"]
     )
+    normalize_borough_names(df)
     return df
 # Creating a new attribute "road_type"
 # 1) Compile your patterns once
