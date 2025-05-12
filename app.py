@@ -9,7 +9,7 @@ from shapely import wkt
 from shapely.geometry import Point
 import re
 
-st.set_page_config(layout="wide")
+#st.set_page_config(layout="wide")
 st.title("Motor Vehicle Collisions in New York City")
 st.markdown("This application is a streamlit dashboard that can be used "
 "to analyze motor vehicle collisions in NYC")
@@ -20,6 +20,12 @@ data = load_d()
 
 # --- Preprocessing Summary ---
 with st.expander("🔍 Preprocessing Summary"):
+    st.subheader("Borough Imputation Summary")
+    counts = data["borough"].isna().value_counts()
+    st.write(pd.DataFrame({
+        "Missing Borough?": counts.index.map({True:"Yes",False:"No"}),
+        "Count": counts.values
+    }))
     st.info("""
     - Missing boroughs imputed based on nearby crash locations.
     - `severity_score` combines injury and fatality counts.
@@ -204,13 +210,6 @@ st.header("Where are the most people injured in NYC?")
 injured_people = st.slider("Number of injured persons in vehicle collision", 0, 19)
 st.map(data.query("injured_persons >= @injured_people")[["latitude","longitude"]].dropna(how = 'any'))
 
-st.subheader("Borough Imputation Summary")
-counts = data["borough"].isna().value_counts()
-st.write(pd.DataFrame({
-    "Missing Borough?": counts.index.map({True:"Yes",False:"No"}),
-    "Count": counts.values
-}))
-
 
 st.header("How many collisions occur during a given time of day?")
 hour = st.slider("Hour to look at", 0, 23)
@@ -219,7 +218,15 @@ data = data[data['date/time'].dt.hour== hour]
 st.markdown("Vehicle collisions between hour %i:00 and %i:00" %(hour, (hour + 1) % 24))
 midpoint = (np.average(data['latitude']),np.average(data['longitude']))
 
+tooltip = {
+    "html": "<b>Collision Count:</b> {elevationValue}",
+    "style": {
+        "backgroundColor": "steelblue",
+        "color": "white"
+    }
+}
 st.write(pdk.Deck(
+    tooltip = tooltip,
     map_style="mapbox://styles/mapbox/light-v9",
     initial_view_state={
     "latitude" : midpoint[0],
