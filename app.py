@@ -8,13 +8,13 @@ import geopandas as gpd
 from shapely import wkt
 from shapely.geometry import Point
 import re
-from Preprocessing import load_d
 
-
+st.set_page_config(layout="wide")
 st.title("Motor Vehicle Collisions in New York City")
 st.markdown("This application is a streamlit dashboard that can be used "
 "to analyze motor vehicle collisions in NYC")
 
+from Preprocessing import load_d
 data = load_d()
 
 
