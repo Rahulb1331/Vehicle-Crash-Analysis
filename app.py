@@ -33,6 +33,11 @@ with st.expander("🔍 Preprocessing Summary"):
     - Extracted datetime features for temporal insights.
     """)
 
+st.header("Where are the most people injured in NYC?")
+injured_people = st.slider("Number of injured persons in vehicle collision", 0, 19)
+st.map(data.query("injured_persons >= @injured_people")[["latitude","longitude"]].dropna(how = 'any'))
+
+
 with st.expander("Crash Severity Analysis"):
     # road type distribution
     st.header("Crash Counts by Road Type")
@@ -199,64 +204,55 @@ with st.expander("Time-of-Day & Road-Type Interaction "):
     )
     st.plotly_chart(fig_time_road, use_container_width=True)
 
+    st.header("How many collisions occur during a given time of day?")
+    hour = st.slider("Hour to look at", 0, 23)
+    data = data[data['date/time'].dt.hour== hour]
 
-# show raw data toggle
-if st.checkbox("Show Raw Data", False, key = "one"):
-    st.write(data)
+    st.markdown("Vehicle collisions between hour %i:00 and %i:00" %(hour, (hour + 1) % 24))
+    midpoint = (np.average(data['latitude']),np.average(data['longitude']))
+
+    tooltip = {
+        "html": "<b>Collision Count:</b> {elevationValue}",
+        "style": {
+            "backgroundColor": "steelblue",
+            "color": "white"
+        }
+    }
+    st.write(pdk.Deck(
+        tooltip = tooltip,
+        map_style="mapbox://styles/mapbox/light-v9",
+        initial_view_state={
+        "latitude" : midpoint[0],
+        "longitude" : midpoint[1],
+        "zoom": 11,
+        "pitch":50
+        },
+        layers = [
+            pdk.Layer(
+            "HexagonLayer",
+            data = data[['date/time','latitude','longitude']],
+            get_position = ['longitude','latitude'],
+            radius = 100,
+            extruded = True,
+            pickable = True,
+            elevation_scale = 4,
+            elevation_range = [0,1000],
+            ),
+        ],
+    ))
+
+    st.subheader("Breakdown by minute between %i:00 and %i:00"%(hour,(hour+1)%24))
+    filtered = data[
+        (data['date/time'].dt.hour >= hour) & (data['date/time'].dt.hour <(hour + 1))
+    ]
+
+    hist = np.histogram(filtered['date/time'].dt.minute, bins = 60, range = (0,60))[0]
+    chart_data = pd.DataFrame({'minute': range(60), 'crashes':hist})
+    fig = px.bar(chart_data,x = 'minute', y='crashes', hover_data=['minute', 'crashes'], height = 400)
+    st.write(fig)
+
 
 original_data = data
-
-st.header("Where are the most people injured in NYC?")
-injured_people = st.slider("Number of injured persons in vehicle collision", 0, 19)
-st.map(data.query("injured_persons >= @injured_people")[["latitude","longitude"]].dropna(how = 'any'))
-
-
-st.header("How many collisions occur during a given time of day?")
-hour = st.slider("Hour to look at", 0, 23)
-data = data[data['date/time'].dt.hour== hour]
-
-st.markdown("Vehicle collisions between hour %i:00 and %i:00" %(hour, (hour + 1) % 24))
-midpoint = (np.average(data['latitude']),np.average(data['longitude']))
-
-tooltip = {
-    "html": "<b>Collision Count:</b> {elevationValue}",
-    "style": {
-        "backgroundColor": "steelblue",
-        "color": "white"
-    }
-}
-st.write(pdk.Deck(
-    tooltip = tooltip,
-    map_style="mapbox://styles/mapbox/light-v9",
-    initial_view_state={
-    "latitude" : midpoint[0],
-    "longitude" : midpoint[1],
-    "zoom": 11,
-    "pitch":50
-    },
-    layers = [
-        pdk.Layer(
-        "HexagonLayer",
-        data = data[['date/time','latitude','longitude']],
-        get_position = ['longitude','latitude'],
-        radius = 100,
-        extruded = True,
-        pickable = True,
-        elevation_scale = 4,
-        elevation_range = [0,1000],
-        ),
-    ],
-))
-
-st.subheader("Breakdown by minute between %i:00 and %i:00"%(hour,(hour+1)%24))
-filtered = data[
-    (data['date/time'].dt.hour >= hour) & (data['date/time'].dt.hour <(hour + 1))
-]
-
-hist = np.histogram(filtered['date/time'].dt.minute, bins = 60, range = (0,60))[0]
-chart_data = pd.DataFrame({'minute': range(60), 'crashes':hist})
-fig = px.bar(chart_data,x = 'minute', y='crashes', hover_data=['minute', 'crashes'], height = 400)
-st.write(fig)
 
 st.header("Top 5 dangerous streets by affected group")
 select= st.selectbox('Affected type of people', ['Pedestrians', 'Cyclists', 'Motorists'])
