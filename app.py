@@ -415,7 +415,7 @@ st.header("Insights & Recommendations")
 with st.expander("📈 Insights"):
     st.subheader("Key Findings")
     st.markdown("""
-    - **Expressways dominate crash volume**, particularly involving Sedans and Passenger Vehicles during peak commute hours.
+    - **Local Streets dominate crash volume**, particularly involving Sedans and Passenger Vehicles during peak commute hours.
     - **“Following Too Closely”** consistently ranks among the top contributing factors, yet many reports leave the factor as “Unspecified.”
     - Although **injury rates on bridges and local streets** may be lower, the **inherent risk** (due to speed, weather exposure, narrow lanes) remains high—bridges account for a disproportionate share of high‑severity incidents.
     """)
