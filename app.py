@@ -266,8 +266,7 @@ elif select == "Cyclists":
 else:
     st.write(original_data.query("injured_motorists >= 1")[["on_street_name", "injured_motorists"]].sort_values(by =['injured_motorists'], ascending  = False).dropna(how='any')[:5])
 
-# --- 8. INSIGHTS & RECOMMENDATIONS ---
-st.header("Insights & Recommendations")
+
 
 with st.expander("Final"):
     # --- Severity Ranking by Street (Avg Severity + Count) ---
@@ -411,7 +410,8 @@ with st.expander("Show Vehicle and Factor Clustering"):
     ))
 
 
-# INSIGHTS AND RECOMMENDATIONS
+# --- 8. INSIGHTS & RECOMMENDATIONS ---
+st.header("Insights & Recommendations")
 with st.expander("📈 Insights"):
     st.subheader("Key Findings")
     st.markdown("""
